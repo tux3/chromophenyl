@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "barrdetwix@gmail.com",
+                "Name": "tux3"
+            }
+        ],
+        "Category": "Appearance",
+        "Description": "Chroma shader",
+        "EnabledByDefault": false,
+        "Icon": "preferences-system-windows-effect-chromophenyl",
+        "Id": "kwin4_effect_chromophenyl",
+        "License": "GPL",
+        "Name": "Chromophenyl",
+        "ServiceTypes": [
+            "KWin/Effect"
+        ]
+    },
+    "X-KDE-ConfigModule": "kwin_chromophenyl_config"
+}

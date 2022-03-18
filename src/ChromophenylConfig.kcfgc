@@ -1,0 +1,4 @@
+File=options.kcfg
+ClassName=ChromophenylConfig
+Singleton=true
+Mutators=true
