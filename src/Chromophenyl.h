@@ -31,7 +31,8 @@ private:
     bool m_inited;
     bool m_valid;
     bool m_active;
-    QTimer forceRepaintTimer;
+    int m_refreshInterval;
+    QTimer m_forceRepaintTimer;
     std::chrono::milliseconds m_lastPresentTime;
     KWin::GLTexture *m_texture;
     KWin::GLRenderTarget *m_fbo;

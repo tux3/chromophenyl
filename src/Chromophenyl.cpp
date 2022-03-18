@@ -12,16 +12,17 @@ Chromophenyl::Chromophenyl()
     : m_inited(false),
       m_valid(true),
       m_active(true),
-      forceRepaintTimer(nullptr),
+      m_refreshInterval(100),
+      m_forceRepaintTimer(nullptr),
       m_lastPresentTime(std::chrono::milliseconds::zero()),
       m_texture(nullptr),
       m_fbo(nullptr),
       m_vbo(nullptr),
       m_shader(nullptr)
 {
-    forceRepaintTimer.setSingleShot(false);
-    forceRepaintTimer.setInterval(50);
-    connect(&forceRepaintTimer, &QTimer::timeout, this, &Chromophenyl::scheduleRepaint);
+  m_forceRepaintTimer.setSingleShot(false);
+  m_forceRepaintTimer.setInterval(m_refreshInterval);
+    connect(&m_forceRepaintTimer, &QTimer::timeout, this, &Chromophenyl::scheduleRepaint);
 
     reconfigure(ReconfigureAll);
 }
@@ -91,16 +92,19 @@ void Chromophenyl::reconfigure(ReconfigureFlags flags)
     if (!m_inited)
         m_valid = loadData();
 
-    ShaderBinder binder(m_shader);
+    m_refreshInterval = 1000. / ChromophenylConfig::minimumFPS();
+    m_forceRepaintTimer.setInterval(m_refreshInterval);
+
+        ShaderBinder binder(m_shader);
     m_shader->setUniform("u_colAlpha", (float)ChromophenylConfig::intensity());
     m_shader->setUniform("u_globalSpeed", (float)ChromophenylConfig::speed());
 
     if (m_valid)
     {
       if (m_active)
-        forceRepaintTimer.start();
+        m_forceRepaintTimer.start();
       else
-        forceRepaintTimer.stop();
+        m_forceRepaintTimer.stop();
     }
 }
 
@@ -153,7 +157,7 @@ void Chromophenyl::scheduleRepaint()
   auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now);
   auto time_diff = now_ms.count() - m_lastPresentTime.count();
 
-  if (time_diff > 50) {
+  if (time_diff > m_refreshInterval) {
     //qDebug() << "chromophenyl: no repaint in" << time_diff << "ms, forcing one";
     effects->addRepaintFull();
   }

@@ -11,5 +11,8 @@
         <entry name="Speed" type="Double">
             <default>1.0</default>
         </entry>
+        <entry name="MinimumFPS" type="Double">
+            <default>20.0</default>
+        </entry>
     </group>
 </kcfg>
