@@ -65,7 +65,7 @@ void main()
     baseScale, scaleRange,
     moveSpeed, scaleSpeed);
 
-    vec4 composite = vec4(colNoise + tex.xyz, 1.0);
+    vec4 composite = vec4(colNoise.zyx + tex.xyz, 1.0);
 
     // Dither with noise
     highp float NOISE_GRANULARITY = 0.5/255.0;
