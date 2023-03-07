@@ -12,6 +12,7 @@ public:
     ~Chromophenyl() override;
 
     void reconfigure(ReconfigureFlags flags) override;
+    bool initializeFramebuffer(QSize screenSize);
 
     bool isActive() const override;
     int requestedEffectChainPosition() const override;

@@ -32,35 +32,27 @@ Chromophenyl::~Chromophenyl() {
     delete m_vbo;
 }
 
-bool Chromophenyl::loadData() {
-    Q_INIT_RESOURCE(chromophenyl);
-    m_inited = true;
-
-    const QSize screenSize = effects->virtualScreenSize();
+bool Chromophenyl::initializeFramebuffer(QSize screenSize) {
     int texw = screenSize.width();
     int texh = screenSize.height();
 
     // Create texture and render target
+    if (m_texture)
+        delete m_texture;
     m_texture = new KWin::GLTexture(GL_RGBA8, texw, texh, 1);
     m_texture->setFilter(GL_LINEAR);
     m_texture->setWrapMode(GL_CLAMP_TO_EDGE);
 
+    if (m_fbo)
+        delete m_fbo;
     m_fbo = new GLFramebuffer(m_texture);
     if (!m_fbo->valid()) {
         qCritical() << "Chromophenyl failed to create FBO render target!";
         return false;
     }
 
-    m_shader = ShaderManager::instance()->generateShaderFromFile(KWin::ShaderTrait::MapTexture, QString(),
-                                                                 QStringLiteral(":/effects/chromophenyl/shader.frag"));
-    if (!m_shader->isValid()) {
-        qCritical() << "The chromophenyl shader failed to load!";
-        return false;
-    }
-    ShaderBinder binder(m_shader.get());
-    m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
-    qDebug() << "Chromophenyl shader loaded!";
-
+    if (m_vbo)
+        delete m_vbo;
     m_vbo = new KWin::GLVertexBuffer(KWin::GLVertexBuffer::Static);
     QVector<float> verts;
     QVector<float> texcoords;
@@ -77,6 +69,27 @@ bool Chromophenyl::loadData() {
     texcoords << screenSize.width() << 0.0;
     verts << screenSize.width() << 0.0;
     m_vbo->setData(6, 2, verts.constData(), texcoords.constData());
+
+    return true;
+}
+
+bool Chromophenyl::loadData() {
+    Q_INIT_RESOURCE(chromophenyl);
+    m_inited = true;
+
+    const QSize screenSize = effects->virtualScreenSize();
+    if (!initializeFramebuffer(screenSize))
+        return false;
+
+    m_shader = ShaderManager::instance()->generateShaderFromFile(KWin::ShaderTrait::MapTexture, QString(),
+                                                                 QStringLiteral(":/effects/chromophenyl/shader.frag"));
+    if (!m_shader->isValid()) {
+        qCritical() << "The chromophenyl shader failed to load!";
+        return false;
+    }
+    ShaderBinder binder(m_shader.get());
+    m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
+    qDebug() << "Chromophenyl shader loaded!";
     return true;
 }
 
@@ -122,6 +135,11 @@ void Chromophenyl::prePaintScreen(KWin::ScreenPrePaintData &data, std::chrono::m
 void Chromophenyl::paintScreen(int mask, const QRegion &region,
                                KWin::ScreenPaintData &data) {
     if (m_valid && m_active) {
+        const QSize screenSize = effects->virtualScreenSize();
+        if (screenSize != m_texture->size() && !initializeFramebuffer(screenSize)) {
+            return;
+        }
+
         // Render to texture
         GLFramebuffer::pushFramebuffer(m_fbo);
         effects->paintScreen(mask, region, data);
@@ -130,6 +148,7 @@ void Chromophenyl::paintScreen(int mask, const QRegion &region,
         // Use the shader
         ShaderBinder binder(m_shader.get());
         m_shader->setUniform("u_time", (float) (m_lastPresentTime.count() / 1000.));
+        m_shader->setUniform("u_textureSize", QVector2D(screenSize.width(), screenSize.height()));
         m_shader->setUniform(KWin::GLShader::ModelViewProjectionMatrix, data.projectionMatrix());
         m_texture->bind();
         m_vbo->bindArrays();
