@@ -35,9 +35,9 @@ private:
     QTimer m_forceRepaintTimer;
     std::chrono::milliseconds m_lastPresentTime;
     KWin::GLTexture *m_texture;
-    KWin::GLRenderTarget *m_fbo;
+    KWin::GLFramebuffer *m_fbo;
     KWin::GLVertexBuffer *m_vbo;
-    KWin::GLShader* m_shader;
+    std::unique_ptr<KWin::GLShader> m_shader;
 };
 
 inline int Chromophenyl::requestedEffectChainPosition() const
